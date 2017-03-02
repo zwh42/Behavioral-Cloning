@@ -192,6 +192,7 @@ def model_setup():
     #relu
     model.add(ELU()) 
     
+    '''
     #conv layer
     model.add(Convolution2D(32, 5, 5, border_mode = "valid"))
     
@@ -203,7 +204,8 @@ def model_setup():
     
     #relu
     model.add(ELU())
-    
+    '''
+
     # flatten()
     model.add(Flatten())
     
@@ -239,8 +241,8 @@ def flow_setup():
     model.compile(loss = "mse", optimizer="adam")
     print(model.summary())
     
-    #history_object = model.fit_generator(train_generator, samples_per_epoch= len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3, verbose=1)
-    #score = model.evaluate_generator(test_generator, 1500, max_q_size=10, nb_worker=1, pickle_safe=False)
+    history_object = model.fit_generator(train_generator, samples_per_epoch= len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3, verbose=1)
+    score = model.evaluate_generator(test_generator, 1500, max_q_size=10, nb_worker=1, pickle_safe=False)
     #print(score)
     
     if DO_VISUALIZE:
