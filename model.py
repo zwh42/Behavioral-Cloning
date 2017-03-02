@@ -14,7 +14,7 @@ from keras.layers.core import Lambda, Dense, Activation, Flatten
 import matplotlib.pyplot as plt
 from collections import Counter
 
-TRAIN_DATA_PATH = [r"C:\Localdata\data\behavioralclone\train_data_4_test"]
+TRAIN_DATA_PATH = [r"/home/carnd/data/"]
 
 DO_VISUALIZE = False
 
@@ -36,7 +36,7 @@ def data_preprocessing(csv_path_list):
             reader = csv.reader(csvfile)
             for line in reader:
                 for i in range(3):
-                    line[i] = os.path.join(csv_path, "IMG", line[i])
+                    line[i] = os.path.join(csv_path, "IMG", line[i].split(os.sep)[-1])
                 sample_line_list.append(line)
                 counter[float(line[3])] += 1
 
@@ -241,9 +241,9 @@ def flow_setup():
     model.compile(loss = "mse", optimizer="adam")
     print(model.summary())
     
-    history_object = model.fit_generator(train_generator, samples_per_epoch= len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3, verbose=1)
+    history_object = model.fit_generator(train_generator, samples_per_epoch= len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=10, verbose=1)
     score = model.evaluate_generator(test_generator, 1500, max_q_size=10, nb_worker=1, pickle_safe=False)
-    #print(score)
+    print(score)
     
     if DO_VISUALIZE:
         plt.plot(history_object.history['loss'])
@@ -255,7 +255,7 @@ def flow_setup():
         plt.show()
     
     
-    #model.save('model.h5')
+    model.save('model.h5')
     print("job finished. model saved")
     
 
