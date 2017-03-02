@@ -14,7 +14,7 @@ from keras.layers.core import Lambda, Dense, Activation, Flatten
 import matplotlib.pyplot as plt
 from collections import Counter
 
-TRAIN_DATA_PATH = [r"/home/carnd/data/"]
+TRAIN_DATA_PATH = [r"../P3DATA/train_data_0",r"../P3DATA/train_data_3",r"../P3DATA/train_data_4", r"../P3DATA/train_data_5", r"../P3DATA/train_data_6"]
 
 DO_VISUALIZE = False
 
@@ -106,6 +106,9 @@ def generator(samples, batch_size=1000):
                 center_image_name = batch_sample[0]
 
                 center_image = cv2.imread(center_image_name)
+                
+                center_image = cv2.cvtColor(center_image, cv2.COLOR_RGB2HSV)
+
                 center_angle = float(batch_sample[3])        
 
                 #print(center_image)
@@ -128,7 +131,7 @@ def generator(samples, batch_size=1000):
             yield shuffle(X_train, y_train)
 
             
-print(next(generator(data_preprocessing(TRAIN_DATA_PATH))))
+#print(next(generator(data_preprocessing(TRAIN_DATA_PATH))))
 
 
 
@@ -145,9 +148,9 @@ def model_setup():
 
     #cropping layer
     crop_top = 70
-    crop_bottom = 20
-    crop_left = 10
-    crop_right = 10
+    crop_bottom = 25
+    crop_left = 30
+    crop_right = 30
     model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right)), input_shape=(160,320,3),  dim_ordering='tf'))
     
     #lambda layer: to normalize images to [-0.5, +0.5] 
@@ -155,8 +158,7 @@ def model_setup():
     
     
     #conv layer
-    n_filters = 128
-    model.add(Convolution2D(n_filters, 3, 3, border_mode = "valid"))
+    model.add(Convolution2D(64, 3, 3, border_mode = "valid"))
     
     #pooling 
     model.add(MaxPooling2D(pool_size=(2,2)))
@@ -168,7 +170,7 @@ def model_setup():
     model.add(ELU())
     
     #conv layer
-    model.add(Convolution2D(100, 3, 3, border_mode = "valid"))
+    model.add(Convolution2D(64, 3, 3, border_mode = "valid"))
     
     #pooling 
     model.add(MaxPooling2D(pool_size=(2,2)))
@@ -181,7 +183,7 @@ def model_setup():
     
     
     #conv layer
-    model.add(Convolution2D(64, 5, 5, border_mode = "same"))
+    model.add(Convolution2D(32, 5, 5, border_mode = "same"))
     
     #pooling 
     model.add(MaxPooling2D(pool_size=(2,2)))
@@ -210,15 +212,19 @@ def model_setup():
     model.add(Flatten())
     
     
-    model.add(Dense(512))
+    #model.add(Dense(512))
     model.add(Dense(128))
     #drop out
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.4))
     model.add(Dense(32))
-    model.add(Dense(8))
+    #model.add(Dense(8))
     #output
     model.add(Dense(1))
     
+    return model
+
+def mode_setup2():
+    model = Sequential()
     return model
 
 
@@ -230,7 +236,7 @@ def flow_setup():
     train_validation_samples, test_samples = train_test_split(samples, test_size = 0.2, random_state = 42)
     train_samples, validation_samples = train_test_split(train_validation_samples, test_size = 0.2, random_state = 42)
     print("train sample count: ", len(train_samples), "\nvalidation sample count: ", len(validation_samples), "\ntest sample count: ", len(test_samples))
-    print("sample data example", train_samples[random.randint(0, len(train_samples))])
+    print("sample data example:\n", train_samples[random.randint(0, len(train_samples))])
     
     train_generator = generator(train_samples, batch_size = 32)
     validation_generator = generator(validation_samples, batch_size = 32)
