@@ -36,7 +36,7 @@ def data_preprocessing(csv_path_list):
             reader = csv.reader(csvfile)
             for line in reader:
                 for i in range(3):
-                    line[i] = os.path.join(csv_path, "IMG", line[i].split(os.sep)[-1])
+                    line[i] = os.path.join(csv_path, "IMG", line[i].split(os.sep)[-1].split("\\")[-1])
                 sample_line_list.append(line)
                 counter[float(line[3])] += 1
 
@@ -104,9 +104,8 @@ def generator(samples, batch_size=1000):
             angles = []
             for batch_sample in batch_samples:
                 center_image_name = batch_sample[0]
-
-                center_image = cv2.imread(center_image_name)
-                
+	        #print(center_image_name)
+                center_image = cv2.imread(center_image_name)             
                 center_image = cv2.cvtColor(center_image, cv2.COLOR_RGB2HSV)
 
                 center_angle = float(batch_sample[3])        
