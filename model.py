@@ -18,6 +18,8 @@ TRAIN_DATA_PATH = [r"../P3DATA/train_data_0"]  #[r"../P3DATA/train_data_0",r"../
 
 DO_VISUALIZE = False
 
+MODEL_INPUT_SHAPE = (35, 160, 3) #height, length, color channel
+
 '''
 CSV file format
 center,left,right,steering,throttle,brake,speed
@@ -91,7 +93,7 @@ def data_preprocessing(csv_path_list):
     
 
     
-data_dict = data_preprocessing(TRAIN_DATA_PATH)
+    #data_dict = data_preprocessing(TRAIN_DATA_PATH)
 
 
 
@@ -109,10 +111,46 @@ def generator(samples, batch_size=1000):
                 #handle center, left, right images
                 for i in range(3):    
                     image_name = batch_sample[i]
-                    image = cv2.imread(image_name)             
-                    image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-
-                    angle = float(batch_sample[3]) + angle_correction[i]        
+                    image = cv2.imread(image_name)                   
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) #OPENCV read in BGR 
+                    #image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+                   
+                    if DO_VISUALIZE:
+                        plt.imshow(image)
+                        plt.title("raw_image: " + str(image.shape))
+                        plt.show()                        
+                    #Crop layer
+                    image = image[60:130,:,:]  #[top:bottom, left:right, :]                    
+                                        
+                    if DO_VISUALIZE:
+                        plt.imshow(image)
+                        plt.title("cropped: " +  str(image.shape))
+                        plt.show()
+                    
+                    
+                    #Normalize image 
+                    norm_image = None
+                    image = cv2.normalize(image, norm_image, alpha=-0.5, beta=0.5, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+                    norm_image = None
+                    if DO_VISUALIZE:
+                        plt.imshow(image)
+                        plt.title("normalize: " +  str(image.shape))
+                        plt.show()
+                        print(image)
+                    
+                    #Resize Layer    
+                    ratio = 2
+                    image = cv2.resize(image, (int(image.shape[1]/ratio), int(image.shape[0]/ratio)))
+                    if DO_VISUALIZE:
+                        plt.imshow(image)
+                        plt.title("resized: " + str(image.shape))                        
+                        plt.show()                        
+                         
+                        
+                    #input("to be:")                        
+                    
+                    
+                    angle = float(batch_sample[3]) + angle_correction[i]  # center, left, right with correction      
 
                     images.append(image)
                     angles.append(angle)
@@ -138,7 +176,8 @@ def generator(samples, batch_size=1000):
             yield shuffle(X_train, y_train)
 
             
-#print(next(generator(data_preprocessing(TRAIN_DATA_PATH))))
+print(next(generator(data_preprocessing(TRAIN_DATA_PATH))))
+
 
 
 
@@ -158,11 +197,14 @@ def model_setup():
     crop_bottom = 25
     crop_left = 30
     crop_right = 30
-    model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right)), input_shape=(160,320,3),  dim_ordering='tf'))
+    
+    #Cropping and normalization is done in generator for better visualization debug
+    #model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right)), input_shape=(160,320,3),  dim_ordering='tf'))
     
     #lambda layer: to normalize images to [-0.5, +0.5] 
-    model.add(Lambda(lambda x: (x / 255.0) - 0.5))   
-    model.add(Convolution2D(64, 3, 3, border_mode = "valid"))
+    #model.add(Lambda(lambda x: (x / 255.0) - 0.5))   
+    
+    model.add(Convolution2D(64, 3, 3, border_mode = "valid", input_shape = MODEL_INPUT_SHAPE))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.5))
     model.add(ELU())
@@ -208,9 +250,11 @@ def flow_setup():
     model.compile(loss = "mse", optimizer="adam")
     print(model.summary())
     
-    history_object = model.fit_generator(train_generator, samples_per_epoch= len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=10, verbose=1)
+    
+    history_object = model.fit_generator(train_generator, samples_per_epoch= len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3, verbose=1)
     score = model.evaluate_generator(test_generator, 1500, max_q_size=10, nb_worker=1, pickle_safe=False)
     print(score)
+    
     
     if DO_VISUALIZE:
         plt.plot(history_object.history['loss'])
