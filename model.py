@@ -14,7 +14,7 @@ from keras.layers.core import Lambda, Dense, Activation, Flatten
 import matplotlib.pyplot as plt
 from collections import Counter
 
-TRAIN_DATA_PATH = [r"../P3DATA/train_data_0",r"../P3DATA/train_data_3",r"../P3DATA/train_data_4", r"../P3DATA/train_data_5", r"../P3DATA/train_data_6"]
+TRAIN_DATA_PATH = [r"../P3DATA/train_data_0"]  #[r"../P3DATA/train_data_0",r"../P3DATA/train_data_3",r"../P3DATA/train_data_4", r"../P3DATA/train_data_5", r"../P3DATA/train_data_6"]
 
 DO_VISUALIZE = False
 
@@ -36,7 +36,9 @@ def data_preprocessing(csv_path_list):
             reader = csv.reader(csvfile)
             for line in reader:
                 for i in range(3):
-                    line[i] = os.path.join(csv_path, "IMG", line[i].split(os.sep)[-1].split("\\")[-1])
+                    image_file = line[i].split("\\")[-1].split("/")[-1].strip()
+                    line[i] = os.path.join(csv_path, "IMG", image_file)  ## the relative path of image
+                    
                 sample_line_list.append(line)
                 counter[float(line[3])] += 1
 
@@ -102,25 +104,31 @@ def generator(samples, batch_size=1000):
 
             images = []
             angles = []
+            angle_correction = [0,+0.25, -0.25] #steering angle correction for center, left, right angles
             for batch_sample in batch_samples:
-                center_image_name = batch_sample[0]
-	        #print(center_image_name)
-                center_image = cv2.imread(center_image_name)             
-                center_image = cv2.cvtColor(center_image, cv2.COLOR_RGB2HSV)
+                #handle center, left, right images
+                for i in range(3):    
+                    image_name = batch_sample[i]
+                    image = cv2.imread(image_name)             
+                    image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
-                center_angle = float(batch_sample[3])        
+                    angle = float(batch_sample[3]) + angle_correction[i]        
 
-                #print(center_image)
-                
-                images.append(center_image)
-                angles.append(center_angle)
-                
-                #flipping images And steering to avoid bias 
-                flipped_center_image = np.fliplr(center_image)
-                flipped_center_angle = -center_angle
-                
-                images.append(flipped_center_image)
-                angles.append(flipped_center_angle)            
+                    images.append(image)
+                    angles.append(angle)
+                    
+                    #flipping images And steering to avoid bias 
+                    flipped_image = np.fliplr(image)
+                    flipped_angle = -angle
+                    
+                    images.append(flipped_image)
+                    angles.append(flipped_angle)
+
+
+
+
+
+
 
                 
                 
@@ -146,78 +154,32 @@ def model_setup():
     model = Sequential()
 
     #cropping layer
-    crop_top = 70
+    crop_top = 75
     crop_bottom = 25
     crop_left = 30
     crop_right = 30
     model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right)), input_shape=(160,320,3),  dim_ordering='tf'))
     
     #lambda layer: to normalize images to [-0.5, +0.5] 
-    model.add(Lambda(lambda x: (x / 255.0) - 0.5))
-    
-    
-    #conv layer
+    model.add(Lambda(lambda x: (x / 255.0) - 0.5))   
     model.add(Convolution2D(64, 3, 3, border_mode = "valid"))
-    
-    #pooling 
     model.add(MaxPooling2D(pool_size=(2,2)))
-    
-    #drop out
     model.add(Dropout(0.5))
-    
-    #relu
     model.add(ELU())
-    
-    #conv layer
     model.add(Convolution2D(64, 3, 3, border_mode = "valid"))
-    
-    #pooling 
     model.add(MaxPooling2D(pool_size=(2,2)))
-    
-    #drop out
     model.add(Dropout(0.5))
-    
-    #relu
     model.add(ELU())
-    
-    
-    #conv layer
     model.add(Convolution2D(32, 5, 5, border_mode = "same"))
-    
-    #pooling 
     model.add(MaxPooling2D(pool_size=(2,2)))
-    
-    #drop out
     model.add(Dropout(0.5))
-    
-    #relu
     model.add(ELU()) 
-    
-    '''
-    #conv layer
-    model.add(Convolution2D(32, 5, 5, border_mode = "valid"))
-    
-    #pooling 
-    model.add(MaxPooling2D(pool_size=(2,2)))
-    
-    #drop out
-    model.add(Dropout(0.5))
-    
-    #relu
-    model.add(ELU())
-    '''
-
-    # flatten()
     model.add(Flatten())
-    
-    
-    #model.add(Dense(512))
     model.add(Dense(128))
     #drop out
     model.add(Dropout(0.4))
     model.add(Dense(32))
-    #model.add(Dense(8))
-    #output
+
     model.add(Dense(1))
     
     return model
