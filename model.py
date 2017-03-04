@@ -112,7 +112,9 @@ def generator(samples, batch_size=1000):
                 for i in range(3):    
                     image_name = batch_sample[i]
                     image = cv2.imread(image_name)                   
-                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) #OPENCV read in BGR 
+                    
+                    '''
+                    #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) #OPENCV read in BGR 
                     #image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
                    
                     if DO_VISUALIZE:
@@ -148,7 +150,7 @@ def generator(samples, batch_size=1000):
                          
                         
                     #input("to be:")                        
-                    
+                    '''
                     
                     angle = float(batch_sample[3]) + angle_correction[i]  # center, left, right with correction      
 
@@ -193,26 +195,25 @@ def model_setup():
     model = Sequential()
 
     #cropping layer
-    crop_top = 75
-    crop_bottom = 25
-    crop_left = 30
-    crop_right = 30
-    
-    #Cropping and normalization is done in generator for better visualization debug
-    #model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right)), input_shape=(160,320,3),  dim_ordering='tf'))
+    crop_top = 60
+    crop_bottom = 30
+    crop_left = 2
+    crop_right = 2    
+
+    model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right)), input_shape=(160,320,3),  dim_ordering='tf'))
     
     #lambda layer: to normalize images to [-0.5, +0.5] 
-    #model.add(Lambda(lambda x: (x / 255.0) - 0.5))   
+    model.add(Lambda(lambda x: x/255.-0.5)) 
     
-    model.add(Convolution2D(64, 3, 3, border_mode = "valid", input_shape = MODEL_INPUT_SHAPE))
+    model.add(Convolution2D(64, 3, 3))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.5))
     model.add(ELU())
-    model.add(Convolution2D(64, 3, 3, border_mode = "valid"))
+    model.add(Convolution2D(64, 3, 3))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.5))
     model.add(ELU())
-    model.add(Convolution2D(32, 5, 5, border_mode = "same"))
+    model.add(Convolution2D(32, 5, 5))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.5))
     model.add(ELU()) 
@@ -222,7 +223,7 @@ def model_setup():
     model.add(Dropout(0.4))
     model.add(Dense(32))
 
-    model.add(Dense(1))
+    model.add(Dense(1, activation='elu'))
     
     return model
 
