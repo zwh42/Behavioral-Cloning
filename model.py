@@ -185,77 +185,48 @@ print(next(generator(data_preprocessing(TRAIN_DATA_PATH))))
 
 
 
-image_color_channel = 3
-image_height = 160
-image_width = 320
 
 
-def model_setup():
-    
-    model = Sequential()
 
-    #cropping layer
-    crop_top = 60
-    crop_bottom = 30
-    crop_left = 2
-    crop_right = 2    
-
-    model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right)), input_shape=(160,320,3),  dim_ordering='tf'))
-    
-    #lambda layer: to normalize images to [-0.5, +0.5] 
-    model.add(Lambda(lambda x: x/255.-0.5)) 
-    
-    model.add(Convolution2D(3, 3, 3))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
-    model.add(ELU())
-    model.add(Convolution2D(64, 3, 3))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
-    model.add(ELU())
-    model.add(Convolution2D(32, 5, 5))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
-    model.add(ELU()) 
-    model.add(Flatten())
-    model.add(Dense(128))
-    #drop out
-    model.add(Dropout(0.4))
-    model.add(Dense(32))
-
-    model.add(Dense(1))
-    
-    return model
 
 def model_setup2():
     model = Sequential()
-    #model = Sequential()
-    # Preprocess incoming data, centered around zero with small standard deviation 
-    model.add(Lambda(lambda x: x/127.5 - 1., input_shape=(160, 320, 3)))
-    model.add(Cropping2D(cropping=((50,20), (0,0))))
+
+    image_color_channel = 3
+    image_height = 160
+    image_width = 320    
+    model.add(Lambda(lambda x: x/127.5 - 1., input_shape=(image_height, image_width, image_color_channel)))
+    
+    #cropping layer
+    crop_top = 50
+    crop_bottom = 20
+    crop_left = 2
+    crop_right = 2   
+    
+    model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right))))
     model.add(Convolution2D(24,5,5))
     model.add(MaxPooling2D((2, 2)))
-    model.add(Activation('relu'))
+    model.add(ELU())
     model.add(Convolution2D(36,5,5))
     model.add(MaxPooling2D((2, 2)))
-    model.add(Activation('relu'))
+    model.add(ELU())
     model.add(Convolution2D(48,3,3))
     model.add(MaxPooling2D((2, 2)))
-    model.add(Activation('relu'))
+    model.add(ELU())
     model.add(Convolution2D(64,3,3))
     model.add(MaxPooling2D((2, 2)))
-    model.add(Activation('relu'))
+    model.add(ELU())
     model.add(Flatten())
     model.add(Dense(1164))
-    model.add(Activation('relu'))
-    #model.add(Dropout(0.5))
+    model.add(ELU())
+    model.add(Dropout(0.5))
     model.add(Dense(100))
-    model.add(Activation('relu'))
+    model.add(ELU())
     #model.add(Dropout(0.5))
     model.add(Dense(50))
-    model.add(Activation('relu'))
+    model.add(ELU())
     model.add(Dense(10))
-    model.add(Activation('relu'))
+    model.add(ELU())
     model.add(Dense(1))  
     return model
 
