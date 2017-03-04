@@ -218,8 +218,8 @@ def model_setup():
     model.add(Activation('relu'))
     model.add(Flatten())
     model.add(Dense(1164))
-    model.add(ELU())
-    model.add(Dropout(0.5))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.4))
     model.add(Dense(100))
     model.add(Activation('relu'))
 
