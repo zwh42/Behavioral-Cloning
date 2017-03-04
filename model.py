@@ -189,7 +189,7 @@ print(next(generator(data_preprocessing(TRAIN_DATA_PATH))))
 
 
 
-def model_setup2():
+def model_setup():
     model = Sequential()
 
     image_color_channel = 3
@@ -206,27 +206,27 @@ def model_setup2():
     model.add(Cropping2D(cropping=((crop_top,crop_bottom), (crop_left,crop_right))))
     model.add(Convolution2D(24,5,5))
     model.add(MaxPooling2D((2, 2)))
-    model.add(ELU())
+    model.add(Activation('relu'))
     model.add(Convolution2D(36,5,5))
     model.add(MaxPooling2D((2, 2)))
-    model.add(ELU())
+    model.add(Activation('relu'))
     model.add(Convolution2D(48,3,3))
     model.add(MaxPooling2D((2, 2)))
-    model.add(ELU())
+    model.add(Activation('relu'))
     model.add(Convolution2D(64,3,3))
     model.add(MaxPooling2D((2, 2)))
-    model.add(ELU())
+    model.add(Activation('relu'))
     model.add(Flatten())
     model.add(Dense(1164))
     model.add(ELU())
     model.add(Dropout(0.5))
     model.add(Dense(100))
-    model.add(ELU())
-    #model.add(Dropout(0.5))
+    model.add(Activation('relu'))
+
     model.add(Dense(50))
-    model.add(ELU())
+    model.add(Activation('relu'))
     model.add(Dense(10))
-    model.add(ELU())
+    model.add(Activation('relu'))
     model.add(Dense(1))  
     return model
 
@@ -246,7 +246,7 @@ def flow_setup():
     test_generator = generator(test_samples, batch_size = 32)            
     #print("generator output example: \n", next(train_generator))
     
-    model = model_setup2()
+    model = model_setup()
     model.compile(loss = "mse", optimizer="adam")
     print(model.summary())
     
